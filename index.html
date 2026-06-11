@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>행사 참가자 등록부</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a5fa8;--blue-dk:#0f4580;--blue-lt:#e8f0fb;
+  --green:#2d6a0f;--green-lt:#eaf3de;--red:#a32d2d;
+  --g50:#f8f8f7;--g100:#f0eeea;--g200:#e0ddd7;
+  --g400:#9e9b95;--g600:#5a5753;--g900:#1c1b19;
+  --border:#e0ddd7;--r:10px;--rsm:6px;--sh:0 1px 3px rgba(0,0,0,.08);
+}
+html,body{min-height:100%;background:var(--g50);font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;color:var(--g900);font-size:15px;line-height:1.5}
+button{font-family:inherit;cursor:pointer;border:1px solid var(--border);background:#fff;border-radius:var(--rsm);padding:8px 16px;font-size:13px;color:var(--g900);display:inline-flex;align-items:center;gap:6px;transition:background .12s}
+button:hover{background:var(--g100)}
+button.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+button.pri:hover{background:var(--blue-dk)}
+button.gh{background:transparent;border-color:transparent;color:var(--g600)}
+input{font-family:inherit;font-size:14px;border:1px solid var(--border);border-radius:var(--rsm);padding:9px 12px;width:100%;color:var(--g900);background:#fff;outline:none;transition:border-color .15s}
+input:focus{border-color:var(--blue)}
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:600}
+.badge.done{background:var(--green-lt);color:var(--green)}
+#wrap{max-width:480px;margin:0 auto;padding:1.5rem 1rem 3rem}
+.att-hd{text-align:center;padding:2rem 0 1.75rem}
+.att-hd .org{font-size:12px;color:var(--g400);margin-bottom:8px}
+.att-hd h1{font-size:22px;font-weight:700;line-height:1.3}
+.att-hd .dt{font-size:13px;color:var(--g400);margin-top:6px}
+.sbox{position:relative;margin-bottom:.75rem}
+.sbox input{padding-left:44px;font-size:16px;border-radius:var(--r);padding-top:13px;padding-bottom:13px;border:1.5px solid var(--border)}
+.sbox input:focus{border-color:var(--blue)}
+.sbox .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--g400);pointer-events:none}
+.hint{text-align:center;font-size:13px;color:var(--g400);padding:2rem 0}
+.rlist{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.ritem{padding:14px 16px;border-bottom:1px solid var(--g100);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .1s}
+.ritem:last-child{border-bottom:none}
+.ritem:hover:not(.signed){background:var(--blue-lt)}
+.ritem.signed{opacity:.6;cursor:default}
+.rname{font-size:15px;font-weight:600;margin-bottom:2px}
+.rsub{font-size:12px;color:var(--g400)}
+.step-hd{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+.pchip{background:var(--blue-lt);border-radius:var(--rsm);padding:10px 14px;margin-bottom:1rem}
+.pname{font-size:16px;font-weight:700;color:var(--blue)}
+.psub{font-size:12px;color:var(--blue);opacity:.75;margin-top:2px}
+.sigarea{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;position:relative}
+.sigarea canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.sph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--g200);font-size:14px;pointer-events:none}
+.sigctrl{display:flex;gap:8px;margin-top:10px}
+.sigctrl button{flex:1;justify-content:center;padding:11px}
+.done-wrap{text-align:center;padding:3.5rem 1rem}
+.done-circle{width:72px;height:72px;border-radius:50%;background:var(--green-lt);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:32px;color:var(--green)}
+.done-t{font-size:20px;font-weight:700;margin-bottom:6px}
+.done-s{font-size:14px;color:var(--g400);margin-bottom:1rem}
+.loading{text-align:center;padding:3rem;color:var(--g400);font-size:14px}
+.blocked-wrap{text-align:center;padding:3.5rem 1rem}
+.blocked-circle{width:72px;height:72px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:32px}
+.blocked-t{font-size:20px;font-weight:700;margin-bottom:8px;color:#856404}
+.blocked-s{font-size:14px;color:var(--g600);line-height:1.7}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="view-blocked" style="display:none">
+    <div class="blocked-wrap">
+      <div class="blocked-circle">⚠️</div>
+      <div class="blocked-t">이미 서명이 완료된 기기입니다</div>
+      <div class="blocked-s" id="blocked-info"></div>
+    </div>
+  </div>
+
+  <div id="view-main">
+    <div class="att-hd">
+      <div class="org" id="att-org"></div>
+      <h1 id="att-title">행사 참가자 등록부</h1>
+      <div class="dt" id="att-date"></div>
+    </div>
+    <div id="step-search">
+      <div class="sbox">
+        <svg class="ico" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="att-si" placeholder="이름을 입력하세요" autocomplete="off">
+      </div>
+      <div id="att-res"></div>
+      <div class="hint" id="att-hint">이름을 검색하여 본인을 선택하세요</div>
+      <div class="loading" id="att-loading" style="display:none">명단 불러오는 중...</div>
+    </div>
+    <div id="step-sign" style="display:none">
+      <div class="step-hd">
+        <button class="gh" id="btn-back" style="padding:6px 8px;margin-left:-8px">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </button>
+        <span style="font-size:15px;font-weight:600">전자서명</span>
+      </div>
+      <div class="pchip"><div class="pname" id="sign-name"></div><div class="psub" id="sign-sub"></div></div>
+      <div style="font-size:13px;color:var(--g400);margin-bottom:8px;text-align:center">아래 칸에 서명해 주세요</div>
+      <div class="sigarea">
+        <canvas id="sigc" width="440" height="200"></canvas>
+        <div class="sph" id="sph">✍ 서명란</div>
+      </div>
+      <div class="sigctrl">
+        <button id="btn-clr">지우기</button>
+        <button class="pri" id="btn-sav">서명 완료</button>
+      </div>
+    </div>
+    <div id="step-done" style="display:none">
+      <div class="done-wrap">
+        <div class="done-circle">✓</div>
+        <div class="done-t" id="done-t"></div>
+        <div class="done-s" id="done-s"></div>
+        <p style="font-size:12px;color:var(--g400);margin-top:.5rem" id="done-restrict-msg"></p>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:2.5rem">
+    <button class="gh" id="btn-to-admin" style="font-size:12px;color:var(--g400)">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      관리자
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+var FB = 'https://event-registration-9430-default-rtdb.firebaseio.com';
+var people = [];
+var attTarget = null;
+var drawing = false, lx = 0, ly = 0;
+var deviceLimitOn = false;
+
+function $(id){ return document.getElementById(id); }
+function fmtDate(d){ if(!d)return''; var p=d.split('-'); return p[0]+'년 '+parseInt(p[1])+'월 '+parseInt(p[2])+'일'; }
+
+function getDeviceId(){
+  var k='reg_device_id', id=localStorage.getItem(k);
+  if(!id){ id='dev_'+Date.now()+'_'+Math.random().toString(36).substr(2,9); localStorage.setItem(k,id); }
+  return id;
+}
+var DEVICE_ID = getDeviceId();
+var DEVICE_KEY = DEVICE_ID.replace(/[.#$[\]]/g,'_');
+
+function fbGet(path){ return fetch(FB+path+'.json').then(function(r){return r.json();}); }
+function fbSet(path,data){ return fetch(FB+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); }
+
+function loadData(){
+  $('att-loading').style.display='block';
+  $('att-hint').style.display='none';
+  fbGet('/event').then(function(ev){
+    if(ev){
+      $('att-title').textContent=ev.name||'행사 참가자 등록부';
+      $('att-org').textContent=ev.org||'';
+      $('att-date').textContent=ev.date?fmtDate(ev.date):'';
+    }
+  });
+  fbGet('/people').then(function(data){
+    $('att-loading').style.display='none';
+    $('att-hint').style.display='block';
+    if(!data){people=[];return;}
+    people=(Array.isArray(data)?data:Object.values(data)).filter(function(p){return p&&p.name;});
+    people.forEach(function(p,i){p.idx=i;});
+  });
+}
+
+function attSearch(v){
+  var q=v.trim(), box=$('att-res'), hint=$('att-hint');
+  if(!q){box.innerHTML='';hint.style.display='block';return;}
+  hint.style.display='none';
+  var hits=people.filter(function(p){return(p.name||'').indexOf(q)!==-1||(p.org||'').indexOf(q)!==-1;});
+  if(!hits.length){box.innerHTML='<div style="text-align:center;padding:2rem;font-size:14px;color:var(--g400)">검색 결과가 없습니다</div>';return;}
+  var html='<div class="rlist">';
+  hits.forEach(function(p){
+    html+='<div class="ritem'+(p.sig?' signed':'')+'" data-idx="'+p.idx+'">'
+      +'<div><div class="rname">'+p.name+(p.pos?' <span style="font-size:12px;font-weight:400;color:var(--g400)">'+p.pos+'</span>':'')+'</div>'
+      +'<div class="rsub">'+(p.org||'')+(p.region?' · '+p.region:'')+'</div></div>'
+      +(p.sig?'<span class="badge done">서명완료</span>':'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>')
+      +'</div>';
+  });
+  html+='</div>';
+  box.innerHTML=html;
+  box.querySelectorAll('.ritem:not(.signed)').forEach(function(el){
+    el.addEventListener('click',function(){selectPerson(parseInt(el.getAttribute('data-idx')));});
+  });
+}
+
+function selectPerson(idx){
+  attTarget=idx;
+  var p=people[idx];
+  $('sign-name').textContent=p.name+(p.pos?' '+p.pos:'');
+  $('sign-sub').textContent=[p.org,p.region].filter(Boolean).join(' · ');
+  $('step-search').style.display='none';
+  $('step-sign').style.display='block';
+  $('step-done').style.display='none';
+  clearSig();
+}
+function attBack(){
+  attTarget=null;
+  $('step-search').style.display='block';
+  $('step-sign').style.display='none';
+  $('att-si').value='';
+  $('att-res').innerHTML='';
+  $('att-hint').style.display='block';
+  loadData();
+}
+
+var sc,sctx;
+function initCanvas(){
+  sc=$('sigc');sctx=sc.getContext('2d');
+  function gp(e){var r=sc.getBoundingClientRect(),sx=sc.width/r.width,sy=sc.height/r.height;if(e.touches)return{x:(e.touches[0].clientX-r.left)*sx,y:(e.touches[0].clientY-r.top)*sy};return{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
+  sc.addEventListener('mousedown',function(e){drawing=true;var p=gp(e);lx=p.x;ly=p.y;$('sph').style.display='none';});
+  sc.addEventListener('mousemove',function(e){if(!drawing)return;var p=gp(e);sctx.beginPath();sctx.moveTo(lx,ly);sctx.lineTo(p.x,p.y);sctx.strokeStyle='#111';sctx.lineWidth=2.5;sctx.lineCap='round';sctx.stroke();lx=p.x;ly=p.y;});
+  sc.addEventListener('mouseup',function(){drawing=false;});
+  sc.addEventListener('mouseleave',function(){drawing=false;});
+  sc.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var p=gp(e);lx=p.x;ly=p.y;$('sph').style.display='none';},{passive:false});
+  sc.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var p=gp(e);sctx.beginPath();sctx.moveTo(lx,ly);sctx.lineTo(p.x,p.y);sctx.strokeStyle='#111';sctx.lineWidth=2.5;sctx.lineCap='round';sctx.stroke();lx=p.x;ly=p.y;},{passive:false});
+  sc.addEventListener('touchend',function(){drawing=false;});
+}
+function clearSig(){if(sctx)sctx.clearRect(0,0,sc.width,sc.height);$('sph').style.display='flex';}
+
+function saveSig(){
+  if(attTarget===null)return;
+  var d=sctx.getImageData(0,0,sc.width,sc.height).data,hasInk=false;
+  for(var i=0;i<d.length;i++){if(d[i]!==0){hasInk=true;break;}}
+  if(!hasInk){alert('서명을 입력해 주세요.');return;}
+  var p=people[attTarget];
+  var sigData=sc.toDataURL('image/png');
+  var sigTime=new Date().toLocaleString('ko-KR');
+  $('btn-sav').disabled=true;
+  $('btn-sav').textContent='저장 중...';
+
+  var saves=[
+    fbSet('/people/'+attTarget+'/sig',sigData),
+    fbSet('/people/'+attTarget+'/sigTime',sigTime)
+  ];
+  if(deviceLimitOn){
+    saves.push(fbSet('/devices/'+DEVICE_KEY,{name:p.name,org:p.org||'',sigTime:sigTime}));
+    localStorage.setItem('reg_signed',JSON.stringify({name:p.name,org:p.org||'',sigTime:sigTime}));
+  }
+
+  Promise.all(saves).then(function(){
+    people[attTarget].sig=sigData;
+    $('done-t').textContent=p.name+'님, 서명 완료!';
+    $('done-s').textContent=(p.org||'')+(p.pos?' · '+p.pos:'');
+    $('done-restrict-msg').textContent=deviceLimitOn?'이 기기로는 추가 서명이 불가합니다':'';
+    $('step-sign').style.display='none';
+    $('step-done').style.display='block';
+    $('btn-sav').disabled=false;
+    $('btn-sav').textContent='서명 완료';
+  }).catch(function(){
+    alert('저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
+    $('btn-sav').disabled=false;
+    $('btn-sav').textContent='서명 완료';
+  });
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  initCanvas();
+
+  // Firebase에서 기기제한 설정 + 기기 등록 여부 동시 확인
+  Promise.all([
+    fbGet('/settings/deviceLimit'),
+    fbGet('/devices/'+DEVICE_KEY)
+  ]).then(function(results){
+    deviceLimitOn = results[0] === true;
+    var deviceRecord = results[1];
+
+    if(deviceLimitOn && deviceRecord){
+      // 기기 제한 ON + 이미 서명한 기기
+      $('view-main').style.display='none';
+      $('view-blocked').style.display='block';
+      $('blocked-info').innerHTML=
+        '<strong>'+deviceRecord.name+'</strong>님으로 서명이 완료되었습니다.<br>'
+        +'<span style="font-size:12px;color:var(--g400)">'+deviceRecord.sigTime+'</span><br><br>'
+        +'본인 확인이 필요하면 담당자에게 문의하세요.';
+    } else {
+      loadData();
+    }
+  }).catch(function(){ loadData(); });
+
+  $('att-si').addEventListener('input',function(){attSearch(this.value);});
+  $('btn-back').addEventListener('click',attBack);
+  $('btn-clr').addEventListener('click',clearSig);
+  $('btn-sav').addEventListener('click',saveSig);
+  $('btn-to-admin').addEventListener('click',function(){window.location.href='admin.html';});
+});
+})();
+</script>
+</body>
+</html>
